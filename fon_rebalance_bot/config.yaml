@@ -15,27 +15,27 @@ portfolio:
     - code: "SPT02"
       name: "YK Portföy İkinci Fon Sepeti Fonu"
       target_weight: 0.30
-      units: 0.0
+      units: 1004.402161
 
     - code: "AFO"
       name: "Ak Portföy Altın Fonu"
       target_weight: 0.20
-      units: 0.0
+      units: 7457.427411
 
     - code: "YMH"
       name: "YK Portföy Hisse Senedi Stratejisi Fonu"
       target_weight: 0.20
-      units: 0.0
+      units: 6181.978913
 
     - code: "ADP"
       name: "Ak Portföy BIST Banka Endeksi Hisse Senedi Fonu"
       target_weight: 0.15
-      units: 0.0
+      units: 5682.674888
 
     - code: "TLY"
       name: "Tera Portföy Birinci Serbest Fon"
       target_weight: 0.15
-      units: 0.0
+      units: 0.752619
 
   # Portföyde nakit/TL olarak bekleyen tutar (fon dışı). Yoksa 0 bırak.
   cash_balance_try: 0.0
