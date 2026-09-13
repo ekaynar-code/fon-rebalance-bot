@@ -1,0 +1,62 @@
+# ============================================================
+# PORTFÖY AYARLARI
+# ============================================================
+# Her fon için:
+#   code           : TEFAS fon kodu (ör. AAK, TCD, IPB)
+#   name           : Kendi notun (bilgi amaçlı, koda etkisi yok)
+#   target_weight  : Hedef ağırlık (0-1 arası, hepsi toplamda 1.0 olmalı)
+#   units          : Elinde bulunan pay adedi (bunu sen elle güncelliyorsun)
+#
+# NOT: units alanını her fon alım/satımından sonra kendin güncellemen gerekir.
+# Bot senin adına otomatik emir GÖNDERMEZ, sadece sinyal üretir.
+
+portfolio:
+  funds:
+    - code: "SPT02"
+      name: "YK Portföy İkinci Fon Sepeti Fonu"
+      target_weight: 0.30
+      units: 0.0
+
+    - code: "AFO"
+      name: "Ak Portföy Altın Fonu"
+      target_weight: 0.20
+      units: 0.0
+
+    - code: "YMH"
+      name: "YK Portföy Hisse Senedi Stratejisi Fonu"
+      target_weight: 0.20
+      units: 0.0
+
+    - code: "ADP"
+      name: "Ak Portföy BIST Banka Endeksi Hisse Senedi Fonu"
+      target_weight: 0.15
+      units: 0.0
+
+    - code: "TLY"
+      name: "Tera Portföy Birinci Serbest Fon"
+      target_weight: 0.15
+      units: 0.0
+
+  # Portföyde nakit/TL olarak bekleyen tutar (fon dışı). Yoksa 0 bırak.
+  cash_balance_try: 0.0
+  cash_target_weight: 0.0
+
+# ============================================================
+# REBALANCING (5/25 KURALI)
+# ============================================================
+# Bir fon sinyale girer eğer:
+#   |güncel_ağırlık - hedef_ağırlık| >= abs_threshold_pct  (yüzde puan)
+#   VEYA
+#   |güncel_ağırlık - hedef_ağırlık| >= hedef_ağırlık * (rel_threshold_pct/100)
+rebalance:
+  abs_threshold_pct: 5.0
+  rel_threshold_pct: 25.0
+
+# ============================================================
+# TEFAS FON TÜRÜ (bilmiyorsan "AUTO" bırak, bot dener)
+# ============================================================
+# Olası değerler: YAT, EMK, BYF, GYF, GSYF, AUTO
+tefas:
+  default_kind: "AUTO"
+  # Belirli fonlar için farklı tür gerekiyorsa buraya ekle: {"AAK": "YAT"}
+  kind_overrides: {}
