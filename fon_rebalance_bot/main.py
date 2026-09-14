@@ -19,7 +19,7 @@ from dotenv import load_dotenv
 
 from tefas_client import get_latest_price, TefasClientError
 from rebalance import evaluate_portfolio
-from telegram_notify import send_telegram_message, TelegramNotifyError
+from email_notify import send_email, EmailNotifyError
 
 
 def load_config(path: str = "config.yaml") -> dict:
@@ -29,27 +29,27 @@ def load_config(path: str = "config.yaml") -> dict:
 
 def format_message(statuses, total_value: float) -> str:
     today = dt.date.today().isoformat()
-    lines = [f"*Fon Portföy Durumu* - {today}", ""]
+    lines = [f"Fon Portföy Durumu - {today}", ""]
 
     any_signal = any(s.needs_rebalance for s in statuses)
 
     for s in statuses:
-        flag = "⚠️" if s.needs_rebalance else "✅"
+        flag = "[SİNYAL VAR]" if s.needs_rebalance else "[OK]"
         lines.append(
-            f"{flag} `{s.code}` - {s.name}\n"
+            f"{flag} {s.code} - {s.name}\n"
             f"   Güncel: %{s.current_weight*100:.1f}  |  Hedef: %{s.target_weight*100:.1f}"
             f"  |  Sapma: {s.deviation_pct_points:+.1f} puan"
         )
         if s.needs_rebalance:
             lines.append(
-                f"   👉 Öneri: *{s.suggested_action}* ~ {s.suggested_amount_try:,.0f} TL"
+                f"   Öneri: {s.suggested_action} ~ {s.suggested_amount_try:,.0f} TL"
             )
         lines.append("")
 
     lines.append(f"Toplam Portföy Değeri: {total_value:,.0f} TL")
 
     if not any_signal:
-        lines.append("\n_Şu an rebalancing gerekmiyor, tüm fonlar eşik içinde._")
+        lines.append("\nŞu an rebalancing gerekmiyor, tüm fonlar eşik içinde.")
 
     return "\n".join(lines)
 
@@ -57,11 +57,13 @@ def format_message(statuses, total_value: float) -> str:
 def main() -> int:
     load_dotenv()
 
-    bot_token = os.environ.get("TELEGRAM_BOT_TOKEN")
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-    if not bot_token or not chat_id:
-        print("HATA: TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID tanımlı değil.", file=sys.stderr)
+    gmail_address = os.environ.get("GMAIL_ADDRESS")
+    gmail_app_password = os.environ.get("GMAIL_APP_PASSWORD")
+    email_to_raw = os.environ.get("EMAIL_TO")
+    if not gmail_address or not gmail_app_password or not email_to_raw:
+        print("HATA: GMAIL_ADDRESS / GMAIL_APP_PASSWORD / EMAIL_TO tanımlı değil.", file=sys.stderr)
         return 1
+    email_to = [addr.strip() for addr in email_to_raw.split(",") if addr.strip()]
 
     config = load_config()
     portfolio_cfg = config["portfolio"]
@@ -100,8 +102,12 @@ def main() -> int:
         error_text = "Hiçbir fon için fiyat çekilemedi:\n" + "\n".join(errors)
         print(error_text, file=sys.stderr)
         try:
-            send_telegram_message(bot_token, chat_id, f"🚨 Fon botu hata verdi:\n{error_text}")
-        except TelegramNotifyError:
+            send_email(
+                gmail_address, gmail_app_password, email_to,
+                subject="🚨 Fon Botu Hatası",
+                body=error_text,
+            )
+        except EmailNotifyError:
             pass
         return 1
 
@@ -114,13 +120,16 @@ def main() -> int:
     )
 
     message = format_message(statuses, total_value)
-    print("\n--- Gönderilecek Mesaj ---")
+    print("\n--- Gönderilecek E-posta ---")
     print(message)
 
+    any_signal = any(s.needs_rebalance for s in statuses)
+    subject = "⚠️ Fon Rebalancing Sinyali Var" if any_signal else "✅ Fon Portföyü Dengede"
+
     try:
-        send_telegram_message(bot_token, chat_id, message)
-    except TelegramNotifyError as exc:
-        print(f"HATA: Telegram mesajı gönderilemedi: {exc}", file=sys.stderr)
+        send_email(gmail_address, gmail_app_password, email_to, subject=subject, body=message)
+    except EmailNotifyError as exc:
+        print(f"HATA: E-posta gönderilemedi: {exc}", file=sys.stderr)
         return 1
 
     return 0
