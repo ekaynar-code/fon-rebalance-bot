@@ -21,6 +21,7 @@ jobs:
           python-version: "3.11"
 
       - name: Bağımlılıkları yükle
+        working-directory: fon_rebalance_bot
         run: pip install -r requirements.txt
 
       - name: Botu çalıştır
