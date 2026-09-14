@@ -1,0 +1,31 @@
+name: Fon Rebalancing Sinyal Botu
+
+on:
+  schedule:
+    # 17:00 UTC = 20:00 Türkiye saati (TEFAS günlük fiyatları genelde bu saatte netleşir)
+    # Sadece hafta içi (Pazartesi-Cuma) çalışır. GitHub Actions cron'da birkaç
+    # dakikalık gecikme normaldir.
+    - cron: "0 17 * * 1-5"
+  workflow_dispatch: {}   # Actions sekmesinden manuel de tetikleyebilirsin
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bağımlılıkları yükle
+        run: pip install -r requirements.txt
+
+      - name: Botu çalıştır
+        env:
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        run: python main.py
