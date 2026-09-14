@@ -25,6 +25,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Botu çalıştır
+        working-directory: fon_rebalance_bot
         env:
           GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
