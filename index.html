@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portföy Paneli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<style>
+  :root{
+    --navy: #16233A;
+    --navy-deep: #0F1929;
+    --paper: #F7F5EF;
+    --ink: #1C2430;
+    --ink-soft: #5B6472;
+    --gold: #C9A227;
+    --gold-soft: #E4CE7B;
+    --line: #2A3A54;
+    --red: #C0553B;
+    --green: #4C7A5E;
+    --radius: 3px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.5;
+  }
+  header{
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-deep) 100%);
+    color: var(--paper);
+    padding: 48px 24px 40px;
+  }
+  header .inner{ max-width: 760px; margin: 0 auto; }
+  header h1{
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 2.1rem;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  header p{
+    color: #B9C2D4;
+    margin: 0;
+    max-width: 52ch;
+    font-size: 0.98rem;
+  }
+  main{ max-width: 760px; margin: 0 auto; padding: 32px 24px 80px; }
+  section{ margin-bottom: 36px; }
+  h2{
+    font-family: 'Source Serif 4', serif;
+    font-weight: 600;
+    font-size: 1.25rem;
+    margin: 0 0 4px;
+    color: var(--navy);
+  }
+  .section-note{ color: var(--ink-soft); font-size: 0.88rem; margin: 0 0 16px; }
+
+  .field-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field.full{ grid-column: 1 / -1; }
+  label{ font-size: 0.82rem; color: var(--ink-soft); }
+  input[type=text], input[type=password], input[type=number], select{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.92rem;
+    padding: 9px 10px;
+    border: 1px solid #CFC9BA;
+    border-radius: var(--radius);
+    background: #fff;
+    color: var(--ink);
+  }
+  input:focus, select:focus{
+    outline: none;
+    border-color: var(--navy);
+    box-shadow: 0 0 0 2px rgba(22,35,58,0.12);
+  }
+
+  button{
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.92rem;
+    padding: 10px 18px;
+    border-radius: var(--radius);
+    border: none;
+    cursor: pointer;
+  }
+  button:focus-visible{ outline: 2px solid var(--navy); outline-offset: 2px; }
+  .btn-primary{ background: var(--navy); color: var(--paper); }
+  .btn-primary:hover{ background: var(--navy-deep); }
+  .btn-secondary{ background: transparent; color: var(--navy); border: 1px solid var(--navy); }
+  .btn-secondary:hover{ background: rgba(22,35,58,0.06); }
+  .btn-danger{ background: transparent; color: var(--red); font-size: 0.82rem; padding: 6px 10px; }
+  .btn-danger:hover{ background: rgba(192,85,59,0.08); }
+  button:disabled{ opacity: 0.45; cursor: not-allowed; }
+
+  table{ width:100%; border-collapse: collapse; margin-top: 4px; }
+  thead th{
+    text-align:left;
+    font-size: 0.76rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+    padding: 0 8px 6px;
+    border-bottom: 1px solid #CFC9BA;
+  }
+  tbody td{ padding: 6px 8px; vertical-align: middle; }
+  tbody tr:not(:last-child) td{ border-bottom: 1px solid #E7E2D4; }
+  tbody input, tbody select{ width: 100%; min-width: 0; }
+  td.col-weight{ width: 90px; }
+  td.col-units{ width: 130px; }
+  td.col-type{ width: 110px; }
+  td.col-action{ width: 40px; text-align:center; }
+
+  .weight-total{
+    margin-top: 10px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+    display:flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: var(--radius);
+    background: #EFEAD9;
+  }
+  .weight-total.ok{ color: var(--green); }
+  .weight-total.bad{ color: var(--red); }
+
+  .row-actions{ display:flex; gap:10px; margin-top: 14px; }
+
+  .status{
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: var(--radius);
+    font-size: 0.88rem;
+    display:none;
+  }
+  .status.show{ display:block; }
+  .status.info{ background:#EAF0E9; color: var(--green); }
+  .status.error{ background:#F5E4DE; color: var(--red); }
+
+  .help{
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin-top: 6px;
+  }
+  .help a{ color: var(--navy); }
+
+  footer{
+    max-width: 760px; margin: 0 auto; padding: 0 24px 60px;
+    color: var(--ink-soft); font-size: 0.8rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <h1>Portföy Paneli</h1>
+    <p>Rebalancing botunun okuduğu config.yaml dosyasını doğrudan buradan düzenle. Değişiklikler GitHub'a kaydedilir, bot bir sonraki çalışmasında bunları kullanır.</p>
+  </div>
+</header>
+
+<main>
+
+  <section id="connect-section">
+    <h2>1. Repoya bağlan</h2>
+    <p class="section-note">Token hiçbir yere kaydedilmez, doğrudan tarayıcından GitHub'a gönderilir.</p>
+    <div class="field-grid">
+      <div class="field full">
+        <label for="pat">GitHub Personal Access Token</label>
+        <input type="password" id="pat" placeholder="ghp_..." autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="owner">Kullanıcı adı</label>
+        <input type="text" id="owner" placeholder="örn. mehmet123">
+      </div>
+      <div class="field">
+        <label for="repo">Repo adı</label>
+        <input type="text" id="repo" placeholder="örn. fon-rebalance-bot">
+      </div>
+      <div class="field">
+        <label for="branch">Branch</label>
+        <input type="text" id="branch" value="main">
+      </div>
+      <div class="field">
+        <label for="path">Dosya yolu</label>
+        <input type="text" id="path" value="fon_rebalance_bot/config.yaml">
+      </div>
+    </div>
+    <div class="row-actions">
+      <button class="btn-primary" id="load-btn">Yükle</button>
+    </div>
+    <p class="help">Token yoksa <a href="https://github.com/settings/tokens" target="_blank" rel="noopener">github.com/settings/tokens</a> adresinden "classic" bir token oluştur, "repo" yetkisini işaretle.</p>
+    <div class="status" id="connect-status"></div>
+  </section>
+
+  <section id="editor-section" style="display:none;">
+    <h2>2. Araçlar</h2>
+    <p class="section-note">Hedef ağırlıklar toplamda %100 olmalı.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="col-type">Tür</th>
+          <th>Kod</th>
+          <th>Ad</th>
+          <th class="col-weight">Hedef %</th>
+          <th class="col-units">Miktar</th>
+          <th class="col-action"></th>
+        </tr>
+      </thead>
+      <tbody id="instruments-body"></tbody>
+    </table>
+
+    <div class="row-actions">
+      <button class="btn-secondary" id="add-row-btn">+ Araç ekle</button>
+    </div>
+
+    <div class="weight-total" id="weight-total">
+      <span>Toplam hedef ağırlık</span>
+      <span id="weight-total-value">%0.0</span>
+    </div>
+
+    <h2 style="margin-top:32px;">3. Rebalancing eşiği</h2>
+    <div class="field-grid">
+      <div class="field">
+        <label for="abs-threshold">Mutlak eşik (yüzde puan)</label>
+        <input type="number" id="abs-threshold" step="0.1">
+      </div>
+      <div class="field">
+        <label for="rel-threshold">Göreli eşik (hedefin %'si)</label>
+        <input type="number" id="rel-threshold" step="0.1">
+      </div>
+    </div>
+
+    <div class="row-actions" style="margin-top:28px;">
+      <button class="btn-primary" id="save-btn">Kaydet</button>
+    </div>
+    <p class="help">Not: Kaydettiğinde config.yaml içindeki açıklama satırları (# ile başlayanlar) kaybolur, sadece veriler korunur.</p>
+    <div class="status" id="save-status"></div>
+  </section>
+
+</main>
+
+<footer>
+  Bu panel doğrudan tarayıcında çalışır, hiçbir sunucuya veri göndermez — sadece GitHub API'sine.
+</footer>
+
+<script>
+const TYPE_OPTIONS = [
+  {value:"fund", label:"Fon"},
+  {value:"stock", label:"Hisse"},
+  {value:"gold", label:"Altın"},
+  {value:"fx", label:"Döviz"},
+  {value:"crypto", label:"Kripto"},
+  {value:"cash", label:"Nakit/Mevduat"},
+];
+
+let currentSha = null;
+let currentConfig = null;
+
+function b64ToUtf8(b64) {
+  const binary = atob(b64.replace(/\n/g, ""));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+function utf8ToB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = "";
+  bytes.forEach(b => binary += String.fromCharCode(b));
+  return btoa(binary);
+}
+
+function showStatus(elId, message, type) {
+  const el = document.getElementById(elId);
+  el.textContent = message;
+  el.className = "status show " + type;
+}
+
+function apiHeaders(token) {
+  return {
+    "Authorization": "token " + token,
+    "Accept": "application/vnd.github+json",
+  };
+}
+
+function addInstrumentRow(inst) {
+  inst = inst || {type:"fund", code:"", name:"", target_weight:0, units:0};
+  const tbody = document.getElementById("instruments-body");
+  const tr = document.createElement("tr");
+
+  const typeSelect = document.createElement("select");
+  TYPE_OPTIONS.forEach(opt => {
+    const o = document.createElement("option");
+    o.value = opt.value; o.textContent = opt.label;
+    if (opt.value === inst.type) o.selected = true;
+    typeSelect.appendChild(o);
+  });
+
+  const codeInput = document.createElement("input");
+  codeInput.type = "text"; codeInput.value = inst.code || "";
+
+  const nameInput = document.createElement("input");
+  nameInput.type = "text"; nameInput.value = inst.name || "";
+
+  const weightInput = document.createElement("input");
+  weightInput.type = "number"; weightInput.step = "0.1";
+  weightInput.value = ((inst.target_weight || 0) * 100).toFixed(1);
+  weightInput.addEventListener("input", updateWeightTotal);
+
+  const unitsInput = document.createElement("input");
+  unitsInput.type = "number"; unitsInput.step = "any";
+  unitsInput.value = inst.units || 0;
+
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "✕"; delBtn.className = "btn-danger"; delBtn.type = "button";
+  delBtn.addEventListener("click", () => { tr.remove(); updateWeightTotal(); });
+
+  const tdType = document.createElement("td"); tdType.className = "col-type"; tdType.appendChild(typeSelect);
+  const tdCode = document.createElement("td"); tdCode.appendChild(codeInput);
+  const tdName = document.createElement("td"); tdName.appendChild(nameInput);
+  const tdWeight = document.createElement("td"); tdWeight.className = "col-weight"; tdWeight.appendChild(weightInput);
+  const tdUnits = document.createElement("td"); tdUnits.className = "col-units"; tdUnits.appendChild(unitsInput);
+  const tdAction = document.createElement("td"); tdAction.className = "col-action"; tdAction.appendChild(delBtn);
+
+  tr.append(tdType, tdCode, tdName, tdWeight, tdUnits, tdAction);
+  tbody.appendChild(tr);
+}
+
+function updateWeightTotal() {
+  const rows = document.querySelectorAll("#instruments-body tr");
+  let total = 0;
+  rows.forEach(tr => {
+    const val = parseFloat(tr.querySelector(".col-weight input").value) || 0;
+    total += val;
+  });
+  const el = document.getElementById("weight-total");
+  const valueEl = document.getElementById("weight-total-value");
+  valueEl.textContent = "%" + total.toFixed(1);
+  el.className = "weight-total " + (Math.abs(total - 100) < 0.05 ? "ok" : "bad");
+  return total;
+}
+
+function readInstrumentsFromTable() {
+  const rows = document.querySelectorAll("#instruments-body tr");
+  const result = [];
+  rows.forEach(tr => {
+    const type = tr.querySelector(".col-type select").value;
+    const code = tr.children[1].querySelector("input").value.trim();
+    const name = tr.children[2].querySelector("input").value.trim();
+    const weight = parseFloat(tr.querySelector(".col-weight input").value) || 0;
+    const units = parseFloat(tr.querySelector(".col-units input").value) || 0;
+    result.push({ type, code, name, target_weight: Math.round(weight * 1000) / 100000, units });
+  });
+  return result;
+}
+
+document.getElementById("load-btn").addEventListener("click", async () => {
+  const token = document.getElementById("pat").value.trim();
+  const owner = document.getElementById("owner").value.trim();
+  const repo = document.getElementById("repo").value.trim();
+  const branch = document.getElementById("branch").value.trim() || "main";
+  const path = document.getElementById("path").value.trim();
+
+  if (!token || !owner || !repo || !path) {
+    showStatus("connect-status", "Lütfen tüm alanları doldur.", "error");
+    return;
+  }
+
+  showStatus("connect-status", "Yükleniyor...", "info");
+
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+    const resp = await fetch(url, { headers: apiHeaders(token) });
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new Error(`GitHub API hatası (${resp.status}): ${body.slice(0,200)}`);
+    }
+    const data = await resp.json();
+    currentSha = data.sha;
+    const yamlText = b64ToUtf8(data.content);
+    currentConfig = jsyaml.load(yamlText);
+
+    const instruments = (currentConfig.portfolio && currentConfig.portfolio.instruments) || [];
+    document.getElementById("instruments-body").innerHTML = "";
+    instruments.forEach(addInstrumentRow);
+    updateWeightTotal();
+
+    const reb = currentConfig.rebalance || {};
+    document.getElementById("abs-threshold").value = reb.abs_threshold_pct ?? 5.0;
+    document.getElementById("rel-threshold").value = reb.rel_threshold_pct ?? 25.0;
+
+    document.getElementById("editor-section").style.display = "block";
+    showStatus("connect-status", "Yüklendi.", "info");
+  } catch (err) {
+    showStatus("connect-status", err.message, "error");
+  }
+});
+
+document.getElementById("add-row-btn").addEventListener("click", () => {
+  addInstrumentRow();
+  updateWeightTotal();
+});
+
+document.getElementById("save-btn").addEventListener("click", async () => {
+  const total = updateWeightTotal();
+  if (Math.abs(total - 100) > 0.05) {
+    showStatus("save-status", `Hedef ağırlıklar toplamı %100 değil (şu an %${total.toFixed(1)}). Düzeltmeden kaydedemezsin.`, "error");
+    return;
+  }
+
+  const token = document.getElementById("pat").value.trim();
+  const owner = document.getElementById("owner").value.trim();
+  const repo = document.getElementById("repo").value.trim();
+  const branch = document.getElementById("branch").value.trim() || "main";
+  const path = document.getElementById("path").value.trim();
+
+  const instruments = readInstrumentsFromTable();
+  const emptyCode = instruments.find(i => !i.code);
+  if (emptyCode) {
+    showStatus("save-status", "Boş 'Kod' alanı olan bir satır var, doldur ya da sil.", "error");
+    return;
+  }
+
+  currentConfig.portfolio.instruments = instruments;
+  currentConfig.rebalance = currentConfig.rebalance || {};
+  currentConfig.rebalance.abs_threshold_pct = parseFloat(document.getElementById("abs-threshold").value) || 5.0;
+  currentConfig.rebalance.rel_threshold_pct = parseFloat(document.getElementById("rel-threshold").value) || 25.0;
+
+  const newYaml = jsyaml.dump(currentConfig, { lineWidth: -1 });
+  const newContentB64 = utf8ToB64(newYaml);
+
+  showStatus("save-status", "Kaydediliyor...", "info");
+
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    const resp = await fetch(url, {
+      method: "PUT",
+      headers: { ...apiHeaders(token), "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "Portföy güncellendi (panel)",
+        content: newContentB64,
+        sha: currentSha,
+        branch: branch,
+      }),
+    });
+    if (!resp.ok) {
+      const body = await resp.text();
+      throw new Error(`Kaydetme hatası (${resp.status}): ${body.slice(0,300)}`);
+    }
+    const data = await resp.json();
+    currentSha = data.content.sha;
+    showStatus("save-status", "Kaydedildi. Bot bir sonraki çalışmasında yeni değerleri kullanacak.", "info");
+  } catch (err) {
+    showStatus("save-status", err.message, "error");
+  }
+});
+</script>
+
+</body>
+</html>

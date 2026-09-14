@@ -1,0 +1,101 @@
+# ============================================================
+# PORTFÖY AYARLARI (çoklu araç türü destekli)
+# ============================================================
+# Her araç için:
+#   type           : "fund" | "stock" | "gold" | "fx" | "crypto" | "cash"
+#   code           : Türe göre kod
+#                     fund   -> TEFAS kodu (örn. SPT02)
+#                     stock  -> BIST kodu (örn. THYAO, ASELS)
+#                     gold   -> "GRAM" (sabit, gram altın)
+#                     fx     -> Döviz kodu (örn. USD, EUR)
+#                     crypto -> Kripto kodu (örn. BTC, ETH) - Binance TRY paritesi kullanılır
+#                     cash   -> Serbest bir etiket (örn. "MEVDUAT1") - fiyatı her zaman 1.0
+#   name           : Kendi notun (bilgi amaçlı, koda etkisi yok)
+#   target_weight  : Hedef ağırlık (0-1 arası, hepsi toplamda 1.0 olmalı)
+#   units          : Elinde bulunan miktar
+#                     fund/stock/crypto -> pay/adet/coin miktarı
+#                     gold -> gram cinsinden miktar
+#                     fx -> döviz cinsinden miktar (örn. 500 USD ise 500)
+#                     cash -> DOĞRUDAN TL tutarı (fiyatı zaten 1.0 kabul edilir)
+#
+# NOT: units alanını her alım/satım/güncelleme sonrası kendin güncellemen
+# gerekir (panel üzerinden ya da elle). Bot senin hesaplarına erişemez.
+
+portfolio:
+  instruments:
+    - type: "fund"
+      code: "SPT02"
+      name: "YK Portföy İkinci Fon Sepeti Fonu"
+      target_weight: 0.30
+      units: 1004.402161
+
+    - type: "fund"
+      code: "AFO"
+      name: "Ak Portföy Altın Fonu"
+      target_weight: 0.20
+      units: 7457.427411
+
+    - type: "fund"
+      code: "YMH"
+      name: "YK Portföy Hisse Senedi Stratejisi Fonu"
+      target_weight: 0.20
+      units: 6181.978913
+
+    - type: "fund"
+      code: "ADP"
+      name: "Ak Portföy BIST Banka Endeksi Hisse Senedi Fonu"
+      target_weight: 0.15
+      units: 5682.674888
+
+    - type: "fund"
+      code: "TLY"
+      name: "Tera Portföy Birinci Serbest Fon"
+      target_weight: 0.15
+      units: 0.752619
+
+  # Örnek: diğer araç türlerini eklemek istersen aşağıdaki gibi satır ekle
+  # (yorum işaretlerini kaldırıp kendi bilgilerinle doldur):
+  #
+  # - type: "stock"
+  #   code: "THYAO"
+  #   name: "Türk Hava Yolları"
+  #   target_weight: 0.10
+  #   units: 50
+  #
+  # - type: "gold"
+  #   code: "GRAM"
+  #   name: "Gram Altın"
+  #   target_weight: 0.10
+  #   units: 20
+  #
+  # - type: "fx"
+  #   code: "USD"
+  #   name: "Dolar Birikimi"
+  #   target_weight: 0.05
+  #   units: 500
+  #
+  # - type: "crypto"
+  #   code: "BTC"
+  #   name: "Bitcoin"
+  #   target_weight: 0.05
+  #   units: 0.01
+  #
+  # - type: "cash"
+  #   code: "MEVDUAT1"
+  #   name: "Vadeli Mevduat"
+  #   target_weight: 0.10
+  #   units: 20000   # TL tutarı doğrudan
+
+# ============================================================
+# REBALANCING (5/25 KURALI)
+# ============================================================
+rebalance:
+  abs_threshold_pct: 5.0
+  rel_threshold_pct: 25.0
+
+# ============================================================
+# TEFAS FON TÜRÜ (sadece type: fund olan araçlar için)
+# ============================================================
+tefas:
+  default_kind: "AUTO"
+  kind_overrides: {}
